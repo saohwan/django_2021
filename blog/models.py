@@ -5,7 +5,8 @@ class Post(models.Model):
     title = models.CharField(max_length=50)
     content = models.TextField()  # 텍스트 필드는 길이를 정의할 필요 없다
 
-    created_at = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     # author : 추후 작성 예정
 
