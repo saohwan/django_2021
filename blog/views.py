@@ -1,18 +1,23 @@
 from django.shortcuts import render
-
+from django.views.generic import ListView
 from blog.models import Post
 
 
-def index(request):
-    posts = Post.objects.all()
+class PostList(ListView):
+    model = Post
+    ordering = '-pk'
 
-    return render(
-        request,
-        'blog/index.html',
-        {
-            'posts': posts,
-        }
-    )
+
+# def index(request):
+#     posts = Post.objects.all()
+#
+#     return render(
+#         request,
+#         'blog/index.html',
+#         {
+#             'posts': posts,
+#         }
+#     )
 
 
 def single_post_page(request, pk):
