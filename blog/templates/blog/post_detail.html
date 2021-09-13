@@ -16,6 +16,7 @@
 
     <!-- Custom styles for this template -->
     <link href="{% static 'blog/css/blog-post.css' %}" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/726bbd6862.js" crossorigin="anonymous"></script>
 
 </head>
 
@@ -78,12 +79,34 @@
             <hr>
 
             <!-- Preview Image -->
-            <img class="img-fluid rounded" src="{{ post.head_image.url }}" alt="{{ post.title }}">
+            {% if post.head_image %}
+                <img class="img-fluid rounded" src="{{ post.head_image.url }}" alt="{{ post.title }}">
+            {% else %}
+                <img class="card-img-top" src="https://picsum.photos/600/200" alt="{{ post.title }}">
+            {% endif %}
 
             <hr>
 
             <!-- Post Content -->
             <p>{{ post.content }}</p>
+
+            {% if post.file_upload %}
+                <a href="{{ post.file_upload.url }}" type="button" class="btn btn-outline-dark" roll="button" download>
+                    DownLoad:
+                    {% if post.get_file_ext == 'xlsx' or post.get_file_ext == 'xls' %}
+                        <i class="far fa-file-excel"></i>
+                    {% elif post.get_file_ext == 'csv' %}
+                        <i class="fas fa-file-csv"></i>
+                    {% elif post.get_file_ext == 'docx' %}
+                        <i class="fas fa-file-word"></i>
+                    {% else %}
+                        <i class="far fa-file-alt"></i>
+                    {% endif %}
+
+                    {{ post.get_file_name }}
+                </a>
+            {% endif %}
+
             <hr>
 
             <!-- Comments Form -->

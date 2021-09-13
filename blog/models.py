@@ -1,3 +1,5 @@
+import os
+
 from django.db import models
 
 
@@ -20,3 +22,10 @@ class Post(models.Model):
 
     def get_absolute_url(self):
         return f'/blog/{self.pk}/'  # 고유의 url 정의
+
+    def get_file_name(self):
+        return os.path.basename(self.file_upload.name)
+        # 파이썬에서 제공하는 os라이브러라 패키지를 이용하고,경로 설정후 basename(self.file_upload.name)
+
+    def get_file_ext(self):
+        return self.get_file_name().split('.')[-1]
