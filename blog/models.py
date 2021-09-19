@@ -3,6 +3,17 @@ from django.contrib.auth.models import User
 from django.db import models
 
 
+class Category(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+    slug = models.SlugField(max_length=200, unique=True, allow_unicode=True)  # 글자로 url 을 구분하기 위한 작업 slug
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name_plural = 'Categories'
+
+
 class Post(models.Model):
     title = models.CharField(max_length=50)
     hook_text = models.CharField(max_length=100, blank=True)
@@ -16,6 +27,7 @@ class Post(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     author = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)  # models.CASCADE 를 하면 작성자가 작성한 게시글 까지 같이 삭제.
+    category = models.ForeignKey(Category, null=True, blank=True, on_delete=models.SET_NULL)  # 카테고리 삭제되더라도 post가 사라지지 않게 SET NULL
 
     def __str__(self):
         return f'[{self.pk}] {self.title} :: {self.author}'
