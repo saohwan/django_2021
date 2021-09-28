@@ -6,6 +6,11 @@
         {% if category %}
             <span class="badge badge-primary float-right">{{ category }}</span>
         {% endif %}
+        {% if tag %}
+            <span class="badge badge-primary float-right">
+                <i class="fas fa-tags"></i>{{ tag }}
+            </span>
+        {% endif %}
     </h1>
 
     {% if post_list.exists %}
@@ -33,11 +38,12 @@
                     {% if p.tags.exists %}
                         <i class="fas fa-tags"></i>
                         {% for tag in p.tags.iterator %} {# all이랑 똑같지만 all을 쓰면 반복문 속도가 늘어질 수 있고, iterator 을 쓰면 부담을 줄일 수 있다.#}
-                            <a href="{{ tag.get_absolute_url }}" class="badge badge-secondary">{{ tag }}</a>
+                            <a href="{{ tag.get_absolute_url }}" class="badge badge-secondary">{{ tag }} ({{ tag.post_set.count }})</a>
                         {% endfor %}
                         <br>
                         <br>
                     {% endif %}
+
                     <a href="{{ p.get_absolute_url }}" class="btn btn-primary">Read More &rarr;</a>
                 </div>
                 <div class="card-footer text-muted">
