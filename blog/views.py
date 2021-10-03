@@ -1,5 +1,6 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.views.generic import ListView, DetailView, CreateView
+from django.contrib.auth.mixins import LoginRequiredMixin
 from blog.models import Post, Category, Tag
 
 
@@ -24,9 +25,17 @@ class PostDetail(DetailView):
         return context
 
 
-class PostCreate(CreateView):
+class PostCreate(CreateView, LoginRequiredMixin):
     model = Post
     fields = ['title', 'hook_text', 'content', 'head_image', 'file_upload', 'category']
+
+    def form_valid(self, form):
+        current_user = self.request.user
+        if current_user.is_authenticated:
+            form.instance.author = current_user  # 만들어진 Form에  instance의 author라는 필드를 current_user 로 채워라
+            return super(PostCreate, self).form_valid(form)  # from_valid() : 양식이 유효한경우 관련 모델을 저장.
+        else:
+            return redirect('/blog/')  # 로그인을 하지 않고 해당 페이지를 열려하면 Blog 경로로 날려짐
 
 
 def category_page(request, slug):
