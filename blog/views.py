@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect
 from django.views.generic import ListView, DetailView, CreateView
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from blog.models import Post, Category, Tag
 
 
@@ -25,13 +25,16 @@ class PostDetail(DetailView):
         return context
 
 
-class PostCreate(CreateView, LoginRequiredMixin):
+class PostCreate(LoginRequiredMixin, UserPassesTestMixin, CreateView):  # LoginRequiredMixin 로그인이 되어 있는 경우에만 이 페이지 접속 가능하게
     model = Post
     fields = ['title', 'hook_text', 'content', 'head_image', 'file_upload', 'category']
 
-    def form_valid(self, form):
+    def test_func(self):
+        return self.request.user.is_superuser or self.request.user.is_staff
+
+    def form_valid(self, form):  # 폼에 들어있는 내용이 맞는지 확인하는 기능
         current_user = self.request.user
-        if current_user.is_authenticated:
+        if current_user.is_authenticated and (current_user.is_staff or current_user.is_superuser):
             form.instance.author = current_user  # 만들어진 Form에  instance의 author라는 필드를 current_user 로 채워라
             return super(PostCreate, self).form_valid(form)  # from_valid() : 양식이 유효한경우 관련 모델을 저장.
         else:
