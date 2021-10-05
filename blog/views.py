@@ -1,5 +1,6 @@
+from django.core.exceptions import PermissionDenied
 from django.shortcuts import render, redirect
-from django.views.generic import ListView, DetailView, CreateView
+from django.views.generic import ListView, DetailView, CreateView, UpdateView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from blog.models import Post, Category, Tag
 
@@ -25,7 +26,8 @@ class PostDetail(DetailView):
         return context
 
 
-class PostCreate(LoginRequiredMixin, UserPassesTestMixin, CreateView):  # LoginRequiredMixin 로그인이 되어 있는 경우에만 이 페이지 접속 가능하게
+class PostCreate(LoginRequiredMixin, UserPassesTestMixin,
+                 CreateView):  # LoginRequiredMixin 로그인이 되어 있는 경우에만 이 페이지 접속 가능하게
     model = Post
     fields = ['title', 'hook_text', 'content', 'head_image', 'file_upload', 'category']
 
@@ -39,6 +41,18 @@ class PostCreate(LoginRequiredMixin, UserPassesTestMixin, CreateView):  # LoginR
             return super(PostCreate, self).form_valid(form)  # from_valid() : 양식이 유효한경우 관련 모델을 저장.
         else:
             return redirect('/blog/')  # 로그인을 하지 않고 해당 페이지를 열려하면 Blog 경로로 날려짐
+
+
+class PostUpdate(LoginRequiredMixin, UpdateView):
+    model = Post
+    fields = ['title', 'hook_text', 'content', 'head_image', 'file_upload', 'category']
+    template_name = 'blog/post_update_form.html'
+     
+    def dispatch(self, request, *args, **kwargs): # 디스패치라는것은 url을 get 방식인지 post방식인지 알아내는 방법이지만, 해당 하는 포스트에 권한이 있는 유저인지 검증할 수 있다.
+        if request.user.is_authenticated and request.user == self.get_object().author:
+            return super(PostUpdate, self).dispatch(request, *args, **kwargs)
+        else:
+            raise PermissionDenied # 장고에서 기본으로 제공되는 기능이고, 에러 페이지 대신에 권한이 없다면 권한이 없다는 메시지를 띄어준다
 
 
 def category_page(request, slug):

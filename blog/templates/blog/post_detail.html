@@ -23,6 +23,11 @@
             <a href="#">{{ post.author | upper }}</a>
         </p>
         <hr>
+        {% if user.is_authenticated and user == post.author %}
+        <a type="button" href="/blog/update_post/{{post.pk}}" class="btn btn-primary btn-sm float-right"><i
+                class="fas fa-pencil-alt"></i>&nbsp;&nbsp; Edit Post
+        </a>
+    {% endif %}
         <!-- Date/Time -->
         <p>Posted on {{ post.created_at }}</p>
         <hr>
@@ -54,6 +59,7 @@
         {% endif %}
 
         <hr>
+
     </div>
 
     <div id="comment-area">

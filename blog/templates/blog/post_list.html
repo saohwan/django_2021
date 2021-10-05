@@ -1,12 +1,13 @@
 {% extends 'blog/base.html' %}
 
 {% block main_area %}
-    {% if user.is_superuser or user.is_staff %}
-        <a type="button" href="/blog/create_post" class="btn btn-primary btn-sm float-right"><i
-                class="fas fa-pencil-alt"></i>&nbsp;&nbsp; New Post
-        </a>
+    {% if user.is_authenticated %}
+        {% if user.is_superuser or user.is_staff %}
+            <a type="button" href="/blog/create_post" class="btn btn-primary btn-sm float-right"><i
+                    class="fas fa-pencil-alt"></i>&nbsp;&nbsp; New Post
+            </a>
+        {% endif %}
     {% endif %}
-
     <h1>
         Blog
         {% if category %}
