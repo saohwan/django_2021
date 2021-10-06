@@ -1,5 +1,6 @@
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import render, redirect
+from django.utils.text import slugify
 from django.views.generic import ListView, DetailView, CreateView, UpdateView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from blog.models import Post, Category, Tag
@@ -38,7 +39,22 @@ class PostCreate(LoginRequiredMixin, UserPassesTestMixin,
         current_user = self.request.user
         if current_user.is_authenticated and (current_user.is_staff or current_user.is_superuser):
             form.instance.author = current_user  # 만들어진 Form에  instance의 author라는 필드를 current_user 로 채워라
-            return super(PostCreate, self).form_valid(form)  # from_valid() : 양식이 유효한경우 관련 모델을 저장.
+            response = super(PostCreate, self).form_valid(form)  # from_valid() : 양식이 유효한경우 관련 모델을 저장.
+
+            tags_str = self.request.POST.get('tags_str')
+            if tags_str:
+                tags_str = tags_str.strip()  # strip : 문자열 앞뒤에 빈공간 있으면 없애준다.
+                tags_str = tags_str.replace(',', ';')  # 문자열 바꿔주기 , > ;
+                tags_list = tags_str.split(';')  # 
+                
+                for t in tags_list:
+                    t = t.strip()
+                    tag, is_tag_created = Tag.objects.get_or_create(name=t)  # get_or_create(name=t) : 만약, name 이 t인 것을 가져오고, 없으면 그것을 name이 t로 만들어서 가져오기.
+                    if is_tag_created:
+                        tag.slug = slugify(t, allow_unicode=True)
+                        tag.save()
+                    self.object.tags.add(tag)
+            return response
         else:
             return redirect('/blog/')  # 로그인을 하지 않고 해당 페이지를 열려하면 Blog 경로로 날려짐
 
