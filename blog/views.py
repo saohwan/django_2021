@@ -46,10 +46,11 @@ class PostCreate(LoginRequiredMixin, UserPassesTestMixin,
                 tags_str = tags_str.strip()  # strip : 문자열 앞뒤에 빈공간 있으면 없애준다.
                 tags_str = tags_str.replace(',', ';')  # 문자열 바꿔주기 , > ;
                 tags_list = tags_str.split(';')  # 
-                
+
                 for t in tags_list:
                     t = t.strip()
-                    tag, is_tag_created = Tag.objects.get_or_create(name=t)  # get_or_create(name=t) : 만약, name 이 t인 것을 가져오고, 없으면 그것을 name이 t로 만들어서 가져오기.
+                    tag, is_tag_created = Tag.objects.get_or_create(
+                        name=t)  # get_or_create(name=t) : 만약, name 이 t인 것을 가져오고, 없으면 그것을 name이 t로 만들어서 가져오기.
                     if is_tag_created:
                         tag.slug = slugify(t, allow_unicode=True)
                         tag.save()
@@ -63,12 +64,42 @@ class PostUpdate(LoginRequiredMixin, UpdateView):
     model = Post
     fields = ['title', 'hook_text', 'content', 'head_image', 'file_upload', 'category']
     template_name = 'blog/post_update_form.html'
-     
-    def dispatch(self, request, *args, **kwargs): # 디스패치라는것은 url을 get 방식인지 post방식인지 알아내는 방법이지만, 해당 하는 포스트에 권한이 있는 유저인지 검증할 수 있다.
+
+    def dispatch(self, request, *args,
+                 **kwargs):  # 디스패치라는것은 url을 get 방식인지 post방식인지 알아내는 방법이지만, 해당 하는 포스트에 권한이 있는 유저인지 검증할 수 있다.
         if request.user.is_authenticated and request.user == self.get_object().author:
             return super(PostUpdate, self).dispatch(request, *args, **kwargs)
         else:
-            raise PermissionDenied # 장고에서 기본으로 제공되는 기능이고, 에러 페이지 대신에 권한이 없다면 권한이 없다는 메시지를 띄어준다
+            raise PermissionDenied  # 장고에서 기본으로 제공되는 기능이고, 에러 페이지 대신에 권한이 없다면 권한이 없다는 메시지를 띄어준다
+
+    def get_context_data(self, **kwargs):
+        context = super(PostUpdate, self).get_context_data()
+        if self.object.tags.exists():
+            tags_str_list = list()
+            for t in self.object.tags.all():
+                tags_str_list.append(t.name)
+            context['tags_str_default'] = '; '.join(tags_str_list)
+        return context
+
+    def form_valid(self, form):
+        response = super(PostUpdate, self).form_valid(form)
+        self.object.tags.clear()
+
+        tags_str = self.request.POST.get('tags_str')
+        if tags_str:
+            tags_str = tags_str.strip()  # strip : 문자열 앞뒤에 빈공간 있으면 없애준다.
+            tags_str = tags_str.replace(',', ';')  # 문자열 바꿔주기 , > ;
+            tags_list = tags_str.split(';')  #
+
+            for t in tags_list:
+                t = t.strip()
+                tag, is_tag_created = Tag.objects.get_or_create(
+                    name=t)  # get_or_create(name=t) : 만약, name 이 t인 것을 가져오고, 없으면 그것을 name이 t로 만들어서 가져오기.
+                if is_tag_created:
+                    tag.slug = slugify(t, allow_unicode=True)
+                    tag.save()
+                self.object.tags.add(tag)
+        return response
 
 
 def category_page(request, slug):
