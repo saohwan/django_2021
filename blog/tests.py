@@ -1,7 +1,8 @@
-from django.test import TestCase, Client  # Client 가 하는 역할 : 장고에서 재공하는 것이며 웹사이트의 방문자를 말함?
 from bs4 import BeautifulSoup
-from .models import Post, Category, Tag
 from django.contrib.auth.models import User  # 장고에서 기본적으로 제공하는 User 임.
+from django.test import TestCase, Client  # Client 가 하는 역할 : 장고에서 재공하는 것이며 웹사이트의 방문자를 말함?
+
+from .models import Post, Category, Tag
 
 
 class TestView(TestCase):
@@ -25,7 +26,7 @@ class TestView(TestCase):
             name='music', slug='music'
         )
         self.tag_python_kor = Tag.objects.create(
-            name='파이썬 공부', slug='파이썬 공부'
+            name='파이썬 공부', slug='파이썬-공부'
         )
         self.tag_python = Tag.objects.create(
             name='python', slug='python'
@@ -175,11 +176,15 @@ class TestView(TestCase):
         # 2.6 첫 번째 포스트의 내용(content)이 포스트 영역에 있다.
         self.assertIn(self.post_001.content, post_area.text)
 
+        self.assertIn(self.tag_hello.name, post_area.text)
+        self.assertNotIn(self.tag_python.name, post_area.text)
+        self.assertNotIn(self.tag_python_kor.name, post_area.text)
+
     def test_category_page(self):
         response = self.client.get(self.category_programming.get_absolute_url())
         self.assertEqual(response.status_code, 200)
 
-        soup = BeautifulSoup(response.content, 'html.parser')  # html.parser 로 담아준다.
+        soup = BeautifulSoup(response.content, 'html.parser')
         self.navbar_test(soup)
         self.category_card_test(soup)
 
@@ -224,8 +229,8 @@ class TestView(TestCase):
         main_area = soup.find('div', id='main-area')
         self.assertIn('Create a New Post', main_area.text)
 
-        tags_str_input = main_area.find('input', id='id_tags_str') # input 이라는 태그중에서 id가 id_tags_str 이 있는지 확인하는 작업.
-        self.assertTrue(tags_str_input)
+        tag_str_input = main_area.find('input', id='id_tags_str')
+        self.assertTrue(tag_str_input)
         self.assertEqual(Tag.objects.count(), 3)
 
         self.client.post(
@@ -233,7 +238,7 @@ class TestView(TestCase):
             {
                 'title': 'Post Form 만들기',
                 'content': 'Post Form 페이지를 만듭시다.',
-                'tags_str': 'new_tag; 한글 태그, python'
+                'tags_str': 'new tag; 한글 태그, python'
             }
         )
 
@@ -243,7 +248,7 @@ class TestView(TestCase):
         self.assertEqual(last_post.content, 'Post Form 페이지를 만듭시다.')
 
         self.assertEqual(last_post.tags.count(), 3)
-        self.assertTrue(Tag.objects.get(name='new_tag'))
+        self.assertTrue(Tag.objects.get(name='new tag'))
         self.assertTrue(Tag.objects.get(name='한글 태그'))
         self.assertTrue(Tag.objects.get(name='python'))
         self.assertEqual(Tag.objects.count(), 5)
@@ -257,7 +262,7 @@ class TestView(TestCase):
 
         # 로그인은 했지만, 작성자가 아닌 경우
         self.assertNotEqual(self.post_003.author, self.user_trump)
-        self.client.login(usernmae='trump', password='somepassword')
+        self.client.login(username='trump', password='somepassword')
         response = self.client.get(update_post_url)
         self.assertNotEqual(response.status_code, 200)
 
@@ -284,14 +289,14 @@ class TestView(TestCase):
                 'category': self.category_music.pk,
                 'tags_str': '파이썬 공부; 한글 태그, some tag'
             },
-            follow=True  # 위 내용을 리다이렉트 되는 것을 따라가려면 설정
+            follow=True
         )
         soup = BeautifulSoup(response.content, 'html.parser')
         main_area = soup.find('div', id='main-area')
         self.assertIn('세 번째 포스트를 수정했습니다.', main_area.text)
         self.assertIn('안녕 세계? 우리는 하나!', main_area.text)
         self.assertIn(self.category_music.name, main_area.text)
-        
+
         self.assertIn('파이썬 공부', main_area.text)
         self.assertIn('한글 태그', main_area.text)
         self.assertIn('some tag', main_area.text)

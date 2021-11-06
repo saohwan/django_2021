@@ -1,9 +1,10 @@
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import render, redirect
 from django.utils.text import slugify
 from django.views.generic import ListView, DetailView, CreateView, UpdateView
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from blog.models import Post, Category, Tag
+
+from .models import Post, Category, Tag
 
 
 class PostList(ListView):
@@ -65,12 +66,11 @@ class PostUpdate(LoginRequiredMixin, UpdateView):
     fields = ['title', 'hook_text', 'content', 'head_image', 'file_upload', 'category']
     template_name = 'blog/post_update_form.html'
 
-    def dispatch(self, request, *args,
-                 **kwargs):  # 디스패치라는것은 url을 get 방식인지 post방식인지 알아내는 방법이지만, 해당 하는 포스트에 권한이 있는 유저인지 검증할 수 있다.
+    def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated and request.user == self.get_object().author:
             return super(PostUpdate, self).dispatch(request, *args, **kwargs)
         else:
-            raise PermissionDenied  # 장고에서 기본으로 제공되는 기능이고, 에러 페이지 대신에 권한이 없다면 권한이 없다는 메시지를 띄어준다
+            raise PermissionDenied
 
     def get_context_data(self, **kwargs):
         context = super(PostUpdate, self).get_context_data()
@@ -87,14 +87,13 @@ class PostUpdate(LoginRequiredMixin, UpdateView):
 
         tags_str = self.request.POST.get('tags_str')
         if tags_str:
-            tags_str = tags_str.strip()  # strip : 문자열 앞뒤에 빈공간 있으면 없애준다.
-            tags_str = tags_str.replace(',', ';')  # 문자열 바꿔주기 , > ;
-            tags_list = tags_str.split(';')  #
+            tags_str = tags_str.strip()
+            tags_str = tags_str.replace(',', ';')
+            tags_list = tags_str.split(';')
 
             for t in tags_list:
                 t = t.strip()
-                tag, is_tag_created = Tag.objects.get_or_create(
-                    name=t)  # get_or_create(name=t) : 만약, name 이 t인 것을 가져오고, 없으면 그것을 name이 t로 만들어서 가져오기.
+                tag, is_tag_created = Tag.objects.get_or_create(name=t)
                 if is_tag_created:
                     tag.slug = slugify(t, allow_unicode=True)
                     tag.save()
@@ -136,7 +135,6 @@ def tag_page(request, slug):
             'no_category_post_count': Post.objects.filter(category=None).count(),
             'tag': tag
         }
-
     )
 
 # def single_post_page(request, pk): # reqeust, 변수명
