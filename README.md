@@ -1,1 +1,1 @@
-# django_if_2021
+# django_2021
